@@ -1,0 +1,72 @@
+#' DDE solution
+#'
+#' @name SEIR
+#' @title SEIR 传染病模型
+#' @param user created parameters
+#' @return solution of an ODE function system
+#' @export
+# 设置中文显示支持
+sysfonts::font_add("kaiti","STKAITI.TTF")
+showtext::showtext_auto()
+
+# 定义微分方程组
+# dS/dt = -beta * S * (I1 + alpha * I2)
+# dE/dt = beta * S * (I1 + alpha * I2) - sigma * E
+# dI1/dt = sigma * E - gamma1 * I1
+# dI2/dt = gamma1 * I1 - gamma2 * I2
+# dR/dt = gamma2 * I2
+
+# 定义参数
+parameters <- c(beta = 0.2, alpha = 0.5, sigma = 0.1, gamma1 = 0.05, gamma2 = 0.1)
+
+# 定义微分方程函数
+SEIR <- function(time, state, parameters) {
+  with(as.list(c(state, parameters)), {
+    dS <- -beta * S * (I1 + alpha * I2)
+    dE <- beta * S * (I1 + alpha * I2) - sigma * E
+    dI1 <- sigma * E - gamma1 * I1
+    dI2 <- gamma1 * I1 - gamma2 * I2
+    dR <- gamma2 * I2
+
+    return(list(c(dS, dE, dI1, dI2, dR)))
+  })
+}
+
+# 定义初始状态
+initial_state <- c(S = 0.9, E = 0.1, I1 = 0, I2 = 0, R = 0)
+
+# 定义时间范围
+times <- seq(0, 100, by = 1)
+
+# 求解微分方程组
+output <- deSolve::ode(y = initial_state, times = times, func = SEIR, parms = parameters)
+
+
+# 设置曲线颜色向量
+colors <- c("S" = "red", "E" = "blue", "I1" = "brown", "I2" = "green", "R" = "purple")
+
+# 总图
+# 绘制结果，并设定曲线颜色
+#' @export
+seirplot <- ggplot2::ggplot(data = as.data.frame(output), ggplot2::aes(x = time)) +
+  ggplot2::geom_line(ggplot2::aes(y = S, color = "S")) +
+  ggplot2::geom_line(ggplot2::aes(y = E, color = "E")) +
+  ggplot2::geom_line(ggplot2::aes(y = I1, color = "I1")) +
+  ggplot2::geom_line(ggplot2::aes(y = I2, color = "I2")) +
+  ggplot2::geom_line(ggplot2::aes(y = R, color = "R")) +
+  ggplot2::scale_color_manual(values = colors) +
+  ggplot2::labs(title = "传染病模型", name = "SEIR", x = "时间", y = "比率") +
+  ggplot2::theme_minimal()
+
+#运行图形对象绘制图形结果
+seirplot
+
+# 保存为矢量图
+ggplot2::ggsave(seirplot,file="hyq.pdf",width = 10,height = 13)
+ggplot2::ggsave(seirplot,file="hyq.svg",width = 10,height = 13)
+
+
+
+
+
+
